@@ -1,0 +1,2 @@
+#define NSIGS 32
+

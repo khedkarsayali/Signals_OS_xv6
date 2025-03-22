@@ -1,3 +1,4 @@
+#include "signal.h"
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -49,6 +50,8 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  sighandler_t handlers[NSIGS];
+  int pending_signals[NSIGS];
 };
 
 // Process memory is laid out contiguously, low addresses first:
