@@ -15,6 +15,7 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+#include "signal.h"
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -441,4 +442,20 @@ sys_pipe(void)
   fd[0] = fd0;
   fd[1] = fd1;
   return 0;
+}
+
+int
+sys_signal(void)
+{
+  int signum;
+  sighandler_t handler;
+  if(argint(0, &signum) < 0 || argptr(1, (void*)&handler,sizeof(handler) < 0)
+    return -1;
+  if(signum < 0 || signum >= NSIGS) 
+    return -1;
+  struct proc *p = myproc();
+  p->handlers[signum] = handler; 
+
+  return 0;
+  
 }
