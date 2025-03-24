@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "signal.h"
 
 struct {
   struct spinlock lock;
@@ -495,6 +496,36 @@ kill(int pid)
   release(&ptable.lock);
   return -1;
 }
+
+int
+kill2(int pid , int signum)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid){
+    	if(signum == SIGKILL || signum ==SIGINT)
+    	{
+    	    p->killed = 1;
+    	    if(p->state == SLEEPING){
+               p->state = RUNNABLE;
+             }
+    	    
+    	}
+    	else{
+    	    p->pending_signals[signum]=1;
+    	}
+      // Wake process from sleep if necessary.
+      //if(p->state == SLEEPING)
+        //p->state = RUNNABLE;
+      //release(&ptable.lock);
+      return 0;
+    }
+  }
+  release(&ptable.lock);
+  return -1;
+} 
 
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.
