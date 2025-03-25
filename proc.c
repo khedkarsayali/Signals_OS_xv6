@@ -563,3 +563,24 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int
+check_pending_signals(int pending_signals[]){
+	for(int i=0;i< NSIGS;i++){
+		if(pending_signals[i]){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int 
+pause(void){
+	struct proc* p = myproc();
+	acquire(&ptable.lock);
+	while(!check_pending_signals(p->pending_signals)){
+		sleep(p, &ptable.lock);
+	}	
+	release(&ptable.lock);
+	return -1;
+}
