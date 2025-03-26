@@ -565,9 +565,10 @@ procdump(void)
 }
 
 int
-check_pending_signals(int pending_signals[]){
+check_pending_signals(struct proc* p){
 	for(int i=0;i< NSIGS;i++){
-		if(pending_signals[i]){
+		if(p->pending_signals[i]){
+			wakeup(p);
 			return 1;
 		}
 	}
@@ -578,7 +579,7 @@ int
 pause(void){
 	struct proc* p = myproc();
 	acquire(&ptable.lock);
-	while(!check_pending_signals(p->pending_signals)){
+	while(!check_pending_signals(p)){
 		sleep(p, &ptable.lock);
 	}	
 	release(&ptable.lock);
