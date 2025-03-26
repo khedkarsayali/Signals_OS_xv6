@@ -7,6 +7,7 @@
 #include "x86.h"
 #include "traps.h"
 #include "spinlock.h"
+#include "signal.h"
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -32,6 +33,18 @@ idtinit(void)
   lidt(idt, sizeof(idt));
 }
 
+void
+handle_signal(struct proc* p){
+    	for(int i=0;i<NSIGS;i++){
+    		if(p->pending_signals[i]){
+    			memmove(&p->old_tf, &p->tf, sizeof(struct trapframe));
+    			p->tf->eip = (uint)p->handlers[i];
+    			p->tf->esp -= 4;
+    			*(uint *)(p->tf->esp) = (uint)sys_sigreturn;
+    			return;
+    		}
+    	}
+}
 //PAGEBREAK: 41
 void
 trap(struct trapframe *tf)
@@ -103,8 +116,12 @@ trap(struct trapframe *tf)
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
   if(myproc() && myproc()->state == RUNNING &&
-     tf->trapno == T_IRQ0+IRQ_TIMER)
+     tf->trapno == T_IRQ0+IRQ_TIMER){
     yield();
+    handle_signal(myproc());
+  }
+    
+    
 
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)

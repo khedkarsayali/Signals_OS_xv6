@@ -100,6 +100,16 @@ sys_uptime(void)
   return xticks;
 }
 
-int sys_pause(void) {
+int
+sys_pause(void)
+{
    return pause();
+}
+
+int
+sys_sigreturn(void)
+{
+   struct proc* p = myproc();
+   memmove(&p->tf, &p->old_tf, sizeof(struct trapframe));
+   return 0;
 }

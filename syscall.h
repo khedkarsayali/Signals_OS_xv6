@@ -23,3 +23,4 @@
 #define SYS_signal 22
 #define SYS_kill2  23
 #define SYS_pause  24
+#define SYS_sigreturn  25 

@@ -564,24 +564,15 @@ procdump(void)
   }
 }
 
-int
-check_pending_signals(struct proc* p){
-	for(int i=0;i< NSIGS;i++){
-		if(p->pending_signals[i]){
-			wakeup(p);
-			return 1;
-		}
-	}
-	return 0;
-}
-
 int 
 pause(void){
 	struct proc* p = myproc();
 	acquire(&ptable.lock);
-	while(!check_pending_signals(p)){
-		sleep(p, &ptable.lock);
-	}	
+	sleep(p, &ptable.lock);
 	release(&ptable.lock);
 	return -1;
+}
+
+void sigreturn(void) {
+   	sys_sigreturn();
 }
