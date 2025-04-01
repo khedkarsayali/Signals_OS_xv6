@@ -6,3 +6,7 @@ int pause(void);
 
 #define	SIGINT	1
 #define	SIGKILL	2
+#define SIGTERM 3
+#define SIGCONT 4
+#define SIGSTOP 5
+
