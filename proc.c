@@ -68,6 +68,42 @@ myproc(void) {
   return p;
 }
 
+//Default hanlders
+void sigkill_handler(int signum) {
+    struct proc *p = myproc();
+    if (p) {	
+        //p->killed = 1;
+        exit();
+    }
+    return;
+}
+
+void sigterm_handler(int signum) {
+    struct proc *p = myproc();
+    if (p) {	
+        p->killed = 1;
+    }
+    return;
+}
+
+void sigstop_handler(int signum) {
+    struct proc *p = myproc();
+    if (p) {
+        p->state = SLEEPING;
+    }
+    return;
+}
+
+void sigcont_handler(int signum) {
+    struct proc *p = myproc();
+    if (p) {
+        if (p->state == SLEEPING) {
+            p->state = RUNNABLE;
+        }
+    }
+    return;
+}
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -91,11 +127,16 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  
+
   memset(p->handlers, 0, sizeof(p->handlers));
   memset(p->pending_signals, 0, sizeof(p->pending_signals));
   p->old_tf = 0;
 
+  p->handlers[SIGKILL] = sigkill_handler;
+  p->handlers[SIGSTOP] = sigstop_handler;
+  p->handlers[SIGCONT] = sigcont_handler;
+  p->handlers[SIGTERM] = sigterm_handler;
+  p->handlers[SIGINT] = sigterm_handler;
   release(&ptable.lock);
 
   // Allocate kernel stack.
