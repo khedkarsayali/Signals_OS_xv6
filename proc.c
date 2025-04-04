@@ -7,6 +7,8 @@
 #include "proc.h"
 #include "spinlock.h"
 #include "signal.h"
+#include "syscall.h"
+#define SYS_sigreturn  25
 
 struct {
   struct spinlock lock;
@@ -89,6 +91,10 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  
+  memset(p->handlers, 0, sizeof(p->handlers));
+  memset(p->pending_signals, 0, sizeof(p->pending_signals));
+  p->old_tf = 0;
 
   release(&ptable.lock);
 
@@ -175,6 +181,11 @@ growproc(int n)
   return 0;
 }
 
+void
+default_signal_handler(void){
+	cprintf("-------Process %d received signal  Terminating----.\n", myproc()->pid);
+  	exit();
+}
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
@@ -212,7 +223,16 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
-
+  
+  for(int i=0; i<NSIGS;i++){
+  	np->pending_signals[i]=0;
+  }
+  
+  for(int i=0; i<NSIGS;i++){
+  	np->handlers[i]=&default_signal_handler;
+  }
+  
+  
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
@@ -502,28 +522,32 @@ kill2(int pid , int signum)
 {
   struct proc *p;
 
-  acquire(&ptable.lock);
+  //acquire(&ptable.lock);
+  cprintf("kill2: Acquired lock, searching for PID %d\n", pid);
+
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
-    	if(signum == SIGKILL || signum ==SIGINT)
-    	{
-    	    p->killed = 1;
-    	    if(p->state == SLEEPING){
-               p->state = RUNNABLE;
-             }
-    	    
-    	}
-    	else{
-    	    p->pending_signals[signum]=1;
-    	}
-      // Wake process from sleep if necessary.
-      //if(p->state == SLEEPING)
-        //p->state = RUNNABLE;
+      cprintf("kill2: Found process with PID %d\n", pid);
+
+      if(signum == SIGKILL || signum == SIGINT){
+        p->killed = 1;
+        cprintf("kill2: Signal %d set to kill process PID %d\n", signum, pid);
+        if(p->state == SLEEPING){
+          p->state = RUNNABLE;
+          cprintf("kill2: Process PID %d was sleeping, set to RUNNABLE\n", pid);
+        }
+      } else {
+        p->pending_signals[signum] = 1;
+        cprintf("kill2: Signal %d set as pending for PID %d\n", signum, pid);
+      }
       //release(&ptable.lock);
+      cprintf("kill2: Released lock, signal processing done for PID %d\n", pid);
       return 0;
     }
   }
-  release(&ptable.lock);
+
+  cprintf("kill2: PID %d not found\n", pid);
+  //release(&ptable.lock);
   return -1;
 } 
 
@@ -574,5 +598,13 @@ pause(void){
 }
 
 void sigreturn(void) {
-   	sys_sigreturn();
+	cprintf("in sigreturn func:Calling sys_sigreturn....\n");
+	asm volatile(
+		"movl $25, %%eax\n\t"
+		"int $64\n\t"
+		:
+		:
+		: "%eax"
+	    );
 }
+

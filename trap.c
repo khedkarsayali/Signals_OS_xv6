@@ -9,6 +9,8 @@
 #include "spinlock.h"
 #include "signal.h"
 
+int copyin(pde_t *pgdir, char *dst, char *src, uint len); 
+
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
@@ -33,23 +35,41 @@ idtinit(void)
   lidt(idt, sizeof(idt));
 }
 
-void
-handle_signal(struct proc* p){
-    	for(int i=0;i<NSIGS;i++){
-    		if(p->pending_signals[i]){
-    			memmove(&p->old_tf, &p->tf, sizeof(struct trapframe));
-    			p->tf->eip = (uint)p->handlers[i];
-    			p->tf->esp -= 4;
-    			*(uint *)(p->tf->esp) = (uint)sys_sigreturn;
-    			return;
-    		}
-    	}
+int has_pending_signals(struct proc *p) {
+  for (int i = 0; i < NSIGS; i++) {
+    if (p->pending_signals[i]) {
+      return i; // Signal pending
+    }
+  }
+  return -1; // No signal pending
 }
-//PAGEBREAK: 41
-void
-trap(struct trapframe *tf)
-{
+
+void handle_signal(struct proc* p){
+    for(int i=0; i<NSIGS; i++){
+        if(p->pending_signals[i]){
+        	
+		memmove(p->old_tf, p->tf, sizeof(struct trapframe));
+		p->tf->eip = (uint)p->handlers[i];
+		
+		p->tf->esp -= 4;            
+		*(uint *)(p->tf->esp) = (uint)sigreturn;
+		p->pending_signals[i] = 0; 
+		cprintf("in handle_signal\n");
+		cprintf("After pushing sigreturn, user esp: 0x%x\n", p->tf->esp);
+
+	   }
+	}
+	return;
+
+}
+void trap(struct trapframe *tf) {
+
+
+  if (myproc() && myproc()->state == RUNNING && has_pending_signals(myproc())) {
+	handle_signal(myproc());
+    }
   if(tf->trapno == T_SYSCALL){
+    
     if(myproc()->killed)
       exit();
     myproc()->tf = tf;
@@ -58,7 +78,7 @@ trap(struct trapframe *tf)
       exit();
     return;
   }
-
+  
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){
@@ -69,61 +89,52 @@ trap(struct trapframe *tf)
     }
     lapiceoi();
     break;
+
   case T_IRQ0 + IRQ_IDE:
     ideintr();
     lapiceoi();
     break;
+
   case T_IRQ0 + IRQ_IDE+1:
-    // Bochs generates spurious IDE1 interrupts.
     break;
+
   case T_IRQ0 + IRQ_KBD:
     kbdintr();
     lapiceoi();
     break;
+
   case T_IRQ0 + IRQ_COM1:
     uartintr();
     lapiceoi();
     break;
+
   case T_IRQ0 + 7:
   case T_IRQ0 + IRQ_SPURIOUS:
-    cprintf("cpu%d: spurious interrupt at %x:%x\n",
-            cpuid(), tf->cs, tf->eip);
+    cprintf("cpu%d: spurious interrupt at %x:%x\n", cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
 
-  //PAGEBREAK: 13
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){
-      // In kernel, it must be our mistake.
-      cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
-              tf->trapno, cpuid(), tf->eip, rcr2());
+      cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n", tf->trapno, cpuid(), tf->eip, rcr2());
       panic("trap");
     }
-    // In user space, assume process misbehaved.
-    cprintf("pid %d %s: trap %d err %d on cpu %d "
-            "eip 0x%x addr 0x%x--kill proc\n",
-            myproc()->pid, myproc()->name, tf->trapno,
-            tf->err, cpuid(), tf->eip, rcr2());
-    myproc()->killed = 1;
-  }
+    sigreturn();
+    cprintf("pid %d %s: trap %d err %d on cpu %d eip 0x%x addr 0x%x--kill proc\n", myproc()->pid, myproc()->name, tf->trapno, tf->err, cpuid(), tf->eip, rcr2());
+    
 
-  // Force process exit if it has been killed and is in user space.
-  // (If it is still executing in the kernel, let it keep running
-  // until it gets to the regular system call return.)
+  
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
 
-  // Force process to give up CPU on clock tick.
-  // If interrupts were on while locks held, would need to check nlock.
-  if(myproc() && myproc()->state == RUNNING &&
-     tf->trapno == T_IRQ0+IRQ_TIMER){
+  if(myproc() && myproc()->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER){
     yield();
-    handle_signal(myproc());
+     
   }
-    
-    
+  
+}
 
-  // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
 }
+

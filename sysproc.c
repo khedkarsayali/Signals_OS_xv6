@@ -7,6 +7,10 @@
 #include "mmu.h"
 #include "proc.h"
 
+
+int copyin(pde_t *pgdir, void *dst, void *src, uint size);
+
+
 int
 sys_fork(void)
 {
@@ -43,6 +47,7 @@ sys_kill2(void)
    int signum;
    if((argint(0, &pid) < 0) || (argint(1,&signum) <0))
     return -1;
+   cprintf("Kill2 function will be called now \n");
   return kill2(pid,signum);
 }
 
@@ -106,10 +111,33 @@ sys_pause(void)
    return pause();
 }
 
+int sys_signal(void) {
+  cprintf("In sys_signal\n");
+
+  int signum;
+  sighandler_t handler;
+  //void *u_handler;
+  struct proc *p = myproc();
+
+  if (argint(0, &signum) < 0)
+    return -1;
+
+  if (argptr(1, (void*)&handler, sizeof(handler)) < 0)
+    return -1;
+
+  //handler = (sighandler_t)u_handler;
+  p->handlers[signum] = (void*)handler;
+  cprintf("Handler registered in sys_signal, handler(addr): %p\n", (void*)handler);
+  return 0;
+}
+
 int
 sys_sigreturn(void)
 {
    struct proc* p = myproc();
-   memmove(&p->tf, &p->old_tf, sizeof(struct trapframe));
+   cprintf("in sys_sigreturn: before memove in sys_sigret\n");
+   memmove(p->tf, p->old_tf, sizeof(struct trapframe));
+   cprintf("in sys_sigreturn:after memove in sys_sigret\n");
+   p->old_tf=0;
    return 0;
 }

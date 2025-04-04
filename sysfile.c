@@ -444,17 +444,4 @@ sys_pipe(void)
   return 0;
 }
 
-int
-sys_signal(void)
-{
-  int signum;
-  sighandler_t handler;
-  if(argint(0, &signum) < 0 || argptr(1, (void*)&handler,sizeof(handler) < 0))
-    return -1;
-  if(signum < 0 || signum >= NSIGS) 
-    return -1;
-  struct proc *p = myproc();
-  p->handlers[signum] = handler; 
-  return 0;
-}
 
