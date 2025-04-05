@@ -525,13 +525,24 @@ kill2(int pid , int signum)
 
       if(signum == SIGKILL || signum == SIGINT){
         cprintf("SIGKILL NOW\n");
-        exit();
+        
         cprintf("kill2: Signal %d set to kill process PID %d\n", signum, pid);
         if(p->state == SLEEPING){
           p->state = RUNNABLE;
           cprintf("kill2: Process PID %d was sleeping, set to RUNNABLE\n", pid);
         }
-      } else {
+        p->killed=1;
+        exit();
+      } 
+      else if(signum==SIGSTOP){
+      	cprintf("%d in SIGSTOP\n",p->pid);
+      	p->state=STOPPED;
+      }
+      else if(signum==SIGCONT && p->state==STOPPED){
+        cprintf("%d in SIGCONT\n",p->pid);
+      	p->state=RUNNABLE;
+      }
+      else {
         p->pending_signals[signum] = 1;
         cprintf("kill2: Signal %d set as pending for PID %d\n", signum, pid);
       }

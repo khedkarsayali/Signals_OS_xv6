@@ -14,15 +14,15 @@ int main() {
     printf(1, "Address of handler: %p, Raw handler value: %x\n", (void*)handler, (uint)handler);
     printf(1,"Address of handler: %p\n", (void*)handler);
     printf(1, "Current PID: %d\n", pid);
-   if (signal(SIGKILL, handler) < 0) {
-     printf(1, "Failed to register handler for SIGINT.\n");
-       exit();
-    }
+   //if (signal(SIGKILL, handler) < 0) {
+     //printf(1, "Failed to register handler for SIGINT.\n");
+       //exit();
+    //}
  
     printf(1, "Signal handler registered. Waiting for SIGINT. Press Ctrl+C to send SIGINT.\n");
 
     printf(1, "Sending SIGTEST using kill2 to PID %d...\n", pid);
-    if (kill2(pid, SIGKILL) < 0) {
+    if (kill2(pid, SIGTERM) < 0) {
         printf(1, "Failed to send SIGTEST using kill2.\n");
     } else {
         printf(1, "SIGTEST sent successfully using kill2.\n");
@@ -33,3 +33,6 @@ int main() {
     printf(1, "Exiting program.\n");
     exit();
 }
+
+
+

@@ -45,26 +45,6 @@ void sigterm_handler(int signum) {
     return;
 }
 
-void sigstop_handler(int signum) {
-    cprintf("in sigstop\n");
-    struct proc *p = myproc();
-    if (p) {
-        p->state = SLEEPING;
-    }
-    return;
-}
-
-void sigcont_handler(int signum) {
-    struct proc *p = myproc();
-    if (p) {
-        if (p->state == SLEEPING) {
-            p->state = RUNNABLE;
-        }
-    }
-    return;
-}
-
-
 int has_pending_signals(struct proc *p) {
   for (int i = 0; i < NSIGS; i++) {
     if (p->pending_signals[i]) {
@@ -91,12 +71,6 @@ void handle_signal(struct proc* p){
         		switch(i){
         			case SIGTERM:
         				sigterm_handler(i);
-        				break;
-        			case SIGSTOP:
-        				sigstop_handler(i);
-        				break;
-        			case SIGCONT:
-        				sigcont_handler(i);
         				break;
         				
         		}
