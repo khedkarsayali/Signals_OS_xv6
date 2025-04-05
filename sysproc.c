@@ -118,9 +118,14 @@ int sys_signal(void) {
   sighandler_t handler;
   //void *u_handler;
   struct proc *p = myproc();
-
+  
   if (argint(0, &signum) < 0)
     return -1;
+    
+  if(signum==SIGKILL){
+  	cprintf("User cannot set custom handler for SIGKILL\n");
+  	return -1;
+  }
 
   if (argptr(1, (void*)&handler, sizeof(handler)) < 0)
     return -1;
@@ -135,9 +140,7 @@ int
 sys_sigreturn(void)
 {
    struct proc* p = myproc();
-   cprintf("in sys_sigreturn: before memove in sys_sigret\n");
    memmove(p->tf, p->old_tf, sizeof(struct trapframe));
-   cprintf("in sys_sigreturn:after memove in sys_sigret\n");
    p->old_tf=0;
    return 0;
 }

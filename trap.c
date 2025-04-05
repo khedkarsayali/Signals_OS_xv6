@@ -35,6 +35,36 @@ idtinit(void)
   lidt(idt, sizeof(idt));
 }
 
+
+//Default hanlders
+void sigterm_handler(int signum) {
+    struct proc *p = myproc();
+    if (p) {	
+        p->killed = 1;
+    }
+    return;
+}
+
+void sigstop_handler(int signum) {
+    cprintf("in sigstop\n");
+    struct proc *p = myproc();
+    if (p) {
+        p->state = SLEEPING;
+    }
+    return;
+}
+
+void sigcont_handler(int signum) {
+    struct proc *p = myproc();
+    if (p) {
+        if (p->state == SLEEPING) {
+            p->state = RUNNABLE;
+        }
+    }
+    return;
+}
+
+
 int has_pending_signals(struct proc *p) {
   for (int i = 0; i < NSIGS; i++) {
     if (p->pending_signals[i]) {
@@ -47,20 +77,37 @@ int has_pending_signals(struct proc *p) {
 void handle_signal(struct proc* p){
     for(int i=0; i<NSIGS; i++){
         if(p->pending_signals[i]){
+        	if(p->handlers[i] != SIG_DFL){
+        		cprintf("in handle_signal for user defined sig\n");
+        		memmove(p->old_tf, p->tf, sizeof(struct trapframe));
+			p->tf->eip = (uint)p->handlers[i];
+			
+			p->tf->esp -= 4;            
+			*(uint *)(p->tf->esp) = (uint)sigreturn;
+			p->pending_signals[i] = 0; 
+			return;			
+        	}
+        	else{
+        		switch(i){
+        			case SIGTERM:
+        				sigterm_handler(i);
+        				break;
+        			case SIGSTOP:
+        				sigstop_handler(i);
+        				break;
+        			case SIGCONT:
+        				sigcont_handler(i);
+        				break;
+        				
+        		}
+        	}
+        	p->pending_signals[i] = 0; 
         	
-		memmove(p->old_tf, p->tf, sizeof(struct trapframe));
-		p->tf->eip = (uint)p->handlers[i];
 		
-		p->tf->esp -= 4;            
-		*(uint *)(p->tf->esp) = (uint)sigreturn;
-		p->pending_signals[i] = 0; 
-		cprintf("in handle_signal\n");
-		cprintf("After pushing sigreturn, user esp: 0x%x\n", p->tf->esp);
 
 	   }
 	}
 	return;
-
 }
 void trap(struct trapframe *tf) {
 

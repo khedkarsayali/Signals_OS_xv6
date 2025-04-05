@@ -68,42 +68,6 @@ myproc(void) {
   return p;
 }
 
-//Default hanlders
-void sigkill_handler(int signum) {
-    struct proc *p = myproc();
-    if (p) {	
-        //p->killed = 1;
-        exit();
-    }
-    return;
-}
-
-void sigterm_handler(int signum) {
-    struct proc *p = myproc();
-    if (p) {	
-        p->killed = 1;
-    }
-    return;
-}
-
-void sigstop_handler(int signum) {
-    struct proc *p = myproc();
-    if (p) {
-        p->state = SLEEPING;
-    }
-    return;
-}
-
-void sigcont_handler(int signum) {
-    struct proc *p = myproc();
-    if (p) {
-        if (p->state == SLEEPING) {
-            p->state = RUNNABLE;
-        }
-    }
-    return;
-}
-
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -128,7 +92,11 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
-  memset(p->handlers, 0, sizeof(p->handlers));
+  for (int i = 0; i < NSIGS; i++) {
+    p->handlers[i] = SIG_DFL;
+}
+
+
   memset(p->pending_signals, 0, sizeof(p->pending_signals));
   p->old_tf = 0;
   release(&ptable.lock);
@@ -259,12 +227,6 @@ fork(void)
 
   pid = np->pid;
  
-  
-  for(int i=0; i<NSIGS;i++){
-  	np->handlers[i]=&default_signal_handler;
-  }
-  
-  
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
@@ -562,7 +524,8 @@ kill2(int pid , int signum)
       cprintf("kill2: Found process with PID %d\n", pid);
 
       if(signum == SIGKILL || signum == SIGINT){
-        p->killed = 1;
+        cprintf("SIGKILL NOW\n");
+        exit();
         cprintf("kill2: Signal %d set to kill process PID %d\n", signum, pid);
         if(p->state == SLEEPING){
           p->state = RUNNABLE;
