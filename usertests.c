@@ -1761,7 +1761,7 @@ void test_pause() {
     printf(1, "Address of handler: %p\n", (void*)handler);
     printf(1, "Current PID: %d\n", pid);
 
-    if (signal(SIGTEST, handler) < 0) {
+    if (signal(SIGINT, handler) < 0) {
         printf(1, "Failed to register handler for SIGTEST.\n");
         exit();
     }
@@ -1769,7 +1769,7 @@ void test_pause() {
     printf(1, "Signal handler registered. Waiting for SIGTEST.\n");
 
     printf(1, "Sending SIGTEST using kill2 to PID %d...\n", pid);
-    if (kill2(pid, SIGTEST) < 0) {
+    if (kill2(pid, SIGINT) < 0) {
         printf(1, "Failed to send SIGTEST using kill2.\n");
     } else {
         printf(1, "SIGTEST sent successfully using kill2.\n");

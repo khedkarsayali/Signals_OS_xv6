@@ -131,12 +131,6 @@ found:
   memset(p->handlers, 0, sizeof(p->handlers));
   memset(p->pending_signals, 0, sizeof(p->pending_signals));
   p->old_tf = 0;
-
-  p->handlers[SIGKILL] = sigkill_handler;
-  p->handlers[SIGSTOP] = sigstop_handler;
-  p->handlers[SIGCONT] = sigcont_handler;
-  p->handlers[SIGTERM] = sigterm_handler;
-  p->handlers[SIGINT] = sigterm_handler;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -264,10 +258,7 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
-  
-  for(int i=0; i<NSIGS;i++){
-  	np->pending_signals[i]=0;
-  }
+ 
   
   for(int i=0; i<NSIGS;i++){
   	np->handlers[i]=&default_signal_handler;

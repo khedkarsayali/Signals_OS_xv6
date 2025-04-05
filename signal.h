@@ -10,5 +10,5 @@ void sigreturn(void);
 #define SIGTERM 3
 #define SIGCONT 4
 #define SIGSTOP 5
+#define SIGTEST 6
 
->>>>>>> origin/signals
