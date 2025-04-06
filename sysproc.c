@@ -139,16 +139,15 @@ int sys_signal(void) {
 int
 sys_sigreturn(void)
 {
+  cprintf("in sys_sigreturn :\n");
   struct proc *p = myproc();
+  cprintf("Before sigreturn: tf->eip = %x tf->esp = %x\n", p->tf->eip, p->tf->esp);
+  
 
-  if (!p || !p->old_tf)
-    return -1;
 
   // Restore previous trapframe (process context before signal)
   memmove(p->tf, p->old_tf, sizeof(struct trapframe));
-  
-  // Free old_tf after restoring
-  kfree((char*)p->old_tf);
+  cprintf("After sigreturn: tf->eip = %x tf->esp = %x\n", p->tf->eip, p->tf->esp);
   p->old_tf = 0;
 
   return 0;

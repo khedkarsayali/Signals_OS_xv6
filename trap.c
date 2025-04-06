@@ -36,17 +36,6 @@ idtinit(void)
   lidt(idt, sizeof(idt));
 }
 
-void sigreturn(void) {
-	cprintf("in sigreturn func:Calling sys_sigreturn....... %d\n",myproc()->pid);
-	asm volatile(
-		"movl $25, %%eax\n\t"
-		"int $64\n\t"
-		:
-		:
-		: "%eax"
-	    );
-}
-
 //Default hanlders
 void sigterm_handler(int signum) {
     struct proc *p = myproc();
@@ -70,11 +59,9 @@ void handle_signal(struct proc* p){
         if(p->pending_signals[i]){
         	if(p->handlers[i] != SIG_DFL){
         		cprintf("in handle_signal for user defined sig\n");
+        		cprintf("Before memove: tf->eip = %x tf->esp = %x\n", p->tf->eip, p->tf->esp);
         		memmove(p->old_tf, p->tf, sizeof(struct trapframe));
 			p->tf->eip = (uint)p->handlers[i];
-			
-			p->tf->esp -= 4;            
-			*(uint *)(p->tf->esp) = (uint)sigreturn;
 			p->pending_signals[i] = 0; 
 			return;			
         	}
@@ -155,7 +142,6 @@ void trap(struct trapframe *tf) {
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n", tf->trapno, cpuid(), tf->eip, rcr2());
       panic("trap");
     }
-    sigreturn();
     cprintf("pid %d %s: trap %d err %d on cpu %d eip 0x%x addr 0x%x--kill proc\n", myproc()->pid, myproc()->name, tf->trapno, tf->err, cpuid(), tf->eip, rcr2());
     
 
@@ -163,10 +149,6 @@ void trap(struct trapframe *tf) {
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
     
-  //if (myproc() && myproc()->state == RUNNING && has_pending_signals(myproc())) {
-    //handle_signal(myproc());
-  //}
-
   if(myproc() && myproc()->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER){
     yield();
      

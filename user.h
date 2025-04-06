@@ -26,7 +26,7 @@ int uptime(void);
 int signal(int,const void*);
 int kill2(int,int);
 int pause(void);
-void sigreturn(void);
+int sigreturn(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

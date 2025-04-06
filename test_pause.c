@@ -6,7 +6,7 @@
 void handler(void) {
     printf(1, "Signal SIGUSR1 received and handled , in handler user defeined!\n");
  
-    return;
+    sigreturn();
 }
 
 int main() {
@@ -19,8 +19,6 @@ int main() {
        exit();
     }
  
-    printf(1, "Signal handler registered. Waiting for SIGINT. Press Ctrl+C to send SIGINT.\n");
-
     printf(1, "Sending SIGTEST using kill2 to PID %d...\n", pid);
     if (kill2(pid, SIGUSR1) < 0) {
         printf(1, "Failed to send SIGTEST using kill2.\n");

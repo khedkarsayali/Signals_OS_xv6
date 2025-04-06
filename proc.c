@@ -97,8 +97,8 @@ found:
 }
 
 
-  memset(p->pending_signals, 0, sizeof(p->pending_signals));
-  p->old_tf = 0;
+  //memset(p->pending_signals, 0, sizeof(p->pending_signals));
+  //p->old_tf = 0;
   release(&ptable.lock);
 
   // Allocate kernel stack.

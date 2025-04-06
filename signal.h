@@ -4,7 +4,9 @@
 typedef void (*sighandler_t)(int);
 int kill2(int pid, int signum);
 int pause(void);
-void sigreturn(void);
+
+int sigreturn(void);
+
 
 #define SIG_DFL ((sighandler_t)0)
 
