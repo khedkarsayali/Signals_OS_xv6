@@ -57,6 +57,9 @@ int has_pending_signals(struct proc *p) {
 void handle_signal(struct proc* p){
     for(int i=0; i<NSIGS; i++){
         if(p->pending_signals[i]){
+        	if (p->blocked_signals & (1 << i)) {
+                   continue;
+                }
         	if(p->handlers[i] != SIG_DFL){
         		cprintf("in handle_signal for user defined sig\n");
         		cprintf("Before memove: tf->eip = %x tf->esp = %x\n", p->tf->eip, p->tf->esp);

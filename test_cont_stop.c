@@ -3,7 +3,7 @@
 #include "signal.h"
 
 void sigusr1_handler() {
-    printf(1, "Custom SIGSEGV handler executed in child!\n");
+    printf(1, "Custom SIGUSR1 handler executed in child!\n");
 
     // After this handler, execution resumes where it left off in child
     sigreturn();
@@ -13,15 +13,10 @@ int main() {
     int pid = fork();
     int counter=0;
 
-  if (pid < 0) {
-    printf(1,"Fork failed\n");
-    exit();
-  }
-
   if (pid == 0) {
     // Child process
-    signal(SIGSEGV, sigusr1_handler);
-    //printf(1,"Child: Registered SIGUSR1 handler. Starting work...\n");
+    signal(SIGUSR1, sigusr1_handler);
+    printf(1,"Child: Registered SIGUSR1 handler. Starting work...\n");
 
     while (counter < 10) {
       printf(1,"Child: Counter = %d\n", counter);
@@ -39,8 +34,10 @@ int main() {
     kill2(pid, SIGSEGV);
     wait();
     printf(1,"Parent: Child exited after completing work\n");
+    exit();
   }
-  printf(1,"after main\n");
-  return 0;
-  printf(1,"after retun0\n");
+
 }
+
+
+

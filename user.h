@@ -27,6 +27,7 @@ int signal(int,const void*);
 int kill2(int,int);
 int pause(void);
 int sigreturn(void);
+int sigprocmask(int how, uint mask);
 
 // ulib.c
 int stat(const char*, struct stat*);

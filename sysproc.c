@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "signal.h"
 
 
 int copyin(pde_t *pgdir, void *dst, void *src, uint size);
@@ -152,4 +153,32 @@ sys_sigreturn(void)
 
   return 0;
 }
+
+int
+sys_sigprocmask(void)
+{
+  int how;
+  uint mask;
+  struct proc *p = myproc();
+
+  if (argint(0, &how) < 0 || argint(1, (int*)&mask) < 0)
+    return -1;
+
+  switch(how) {
+    case SIG_BLOCK:
+      p->blocked_signals |= mask;
+      break;
+    case SIG_UNBLOCK:
+      p->blocked_signals &= ~mask;
+      break;
+    case SIG_SETMASK:
+      p->blocked_signals = mask;
+      break;
+    default:
+      return -1;
+  }
+
+  return 0;
+}
+
 

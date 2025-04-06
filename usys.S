@@ -32,3 +32,5 @@ SYSCALL(uptime)
 SYSCALL(signal)
 SYSCALL(kill2)
 SYSCALL(pause)
+SYSCALL(sigprocmask)
+

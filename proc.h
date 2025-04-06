@@ -53,6 +53,7 @@ struct proc {
   sighandler_t handlers[NSIGS];
   int pending_signals[NSIGS];
   struct trapframe *old_tf;
+  uint blocked_signals; 
 };
 
 // Process memory is laid out contiguously, low addresses first:
