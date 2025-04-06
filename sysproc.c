@@ -139,8 +139,18 @@ int sys_signal(void) {
 int
 sys_sigreturn(void)
 {
-   struct proc* p = myproc();
-   memmove(p->tf, p->old_tf, sizeof(struct trapframe));
-   p->old_tf=0;
-   return 0;
+  struct proc *p = myproc();
+
+  if (!p || !p->old_tf)
+    return -1;
+
+  // Restore previous trapframe (process context before signal)
+  memmove(p->tf, p->old_tf, sizeof(struct trapframe));
+  
+  // Free old_tf after restoring
+  kfree((char*)p->old_tf);
+  p->old_tf = 0;
+
+  return 0;
 }
+

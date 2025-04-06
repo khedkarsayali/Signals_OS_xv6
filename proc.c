@@ -8,7 +8,7 @@
 #include "spinlock.h"
 #include "signal.h"
 #include "syscall.h"
-#define SYS_sigreturn  25
+
 
 struct {
   struct spinlock lock;
@@ -348,7 +348,7 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if(p->state != RUNNABLE || p->state == STOPPED)
         continue;
 
       // Switch to chosen process.  It is the process's job
@@ -516,7 +516,7 @@ kill2(int pid , int signum)
 {
   struct proc *p;
 
-  //acquire(&ptable.lock);
+  acquire(&ptable.lock);
   cprintf("kill2: Acquired lock, searching for PID %d\n", pid);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -546,14 +546,14 @@ kill2(int pid , int signum)
         p->pending_signals[signum] = 1;
         cprintf("kill2: Signal %d set as pending for PID %d\n", signum, pid);
       }
-      //release(&ptable.lock);
+      release(&ptable.lock);
       cprintf("kill2: Released lock, signal processing done for PID %d\n", pid);
       return 0;
     }
   }
 
   cprintf("kill2: PID %d not found\n", pid);
-  //release(&ptable.lock);
+  release(&ptable.lock);
   return -1;
 } 
 
@@ -602,15 +602,3 @@ pause(void){
 	release(&ptable.lock);
 	return -1;
 }
-
-void sigreturn(void) {
-	cprintf("in sigreturn func:Calling sys_sigreturn....\n");
-	asm volatile(
-		"movl $25, %%eax\n\t"
-		"int $64\n\t"
-		:
-		:
-		: "%eax"
-	    );
-}
-

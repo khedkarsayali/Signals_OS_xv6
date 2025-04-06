@@ -1,31 +1,37 @@
 #include "types.h"
 #include "user.h"
 #include "signal.h"
+#define SYS_sigreturn  25
+
+void sigusr1_handler() {
+    printf(1, "Custom SIGUSR1 handler executed in child!\n");
+
+    // After this handler, execution resumes where it left off in child
+    return;
+}
+
 int main() {
     int pid = fork();
 
     if (pid == 0) {
         // Child process
-        int i = 0;
+        //signal(SIGUSR1, sigusr1_handler);  // Registering custom handler
+
         while (1) {
-            printf(1,"Child running... %d\n", i++);
-            sleep(100);
+            printf(1, "Child running...\n");
+            sleep(10);
         }
     } else {
         // Parent process
-        sleep(300); // Let child run for a while
-        printf(1,"Parent: Sending SIGSTOP to child\n");
-        printf(1,"%d\n",pid);
-        kill2(pid, SIGSTOP); // 19 is typically SIGSTOP
 
-        sleep(300); // Child should be stopped now
-        printf(1,"Parent: Sending SIGCONT to child\n");
-        kill2(pid, SIGCONT); // 18 is typically SIGCONT
+        sleep(20);
+        printf(1, "Parent sending SIGUSR1 to child\n");
+        kill2(pid, SIGKILL);
 
-        sleep(300); // Child should resume
-        printf(1,"Parent: Killing child\n");
-        kill2(pid, SIGKILL); // SIGKILL
-    }	
+        
+        wait();  // Wait for child to be killed
+        printf(1, "Child terminated. Parent exiting.\n");
+    }
 
     return 0;
 }
