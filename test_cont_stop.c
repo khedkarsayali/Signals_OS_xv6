@@ -20,8 +20,8 @@ int main() {
 
   if (pid == 0) {
     // Child process
-    signal(SIGUSR1, sigusr1_handler);
-    printf(1,"Child: Registered SIGUSR1 handler. Starting work...\n");
+    //signal(SIGUSR1, sigusr1_handler);
+    //printf(1,"Child: Registered SIGUSR1 handler. Starting work...\n");
 
     while (counter < 10) {
       printf(1,"Child: Counter = %d\n", counter);
@@ -36,7 +36,7 @@ int main() {
     // Parent process
     sleep(3);  // Let child do some work first
     printf(1,"Parent: Sending SIGUSR1 to child (pid: %d)\n", pid);
-    kill2(pid, SIGUSR1);
+    kill2(pid, SIGKILL);
     wait();
     printf(1,"Parent: Child exited after completing work\n");
   }

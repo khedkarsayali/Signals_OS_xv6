@@ -524,7 +524,6 @@ kill2(int pid , int signum)
       cprintf("kill2: Found process with PID %d\n", pid);
 
       if(signum == SIGKILL || signum == SIGINT){
-        cprintf("SIGKILL NOW\n");
         
         cprintf("kill2: Signal %d set to kill process PID %d\n", signum, pid);
         if(p->state == SLEEPING){
@@ -532,7 +531,6 @@ kill2(int pid , int signum)
           cprintf("kill2: Process PID %d was sleeping, set to RUNNABLE\n", pid);
         }
         p->killed=1;
-        exit();
       } 
       else if(signum==SIGSTOP){
       	cprintf("%d in SIGSTOP\n",p->pid);
