@@ -73,6 +73,9 @@ void handle_signal(struct proc* p){
         			case SIGUSR1:
         				sigterm_handler(i);
         				break;
+        			case SIGSEGV:
+        				sigterm_handler(i);
+        				break;
         				
         		}
         		p->pending_signals[i] = 0;
@@ -84,7 +87,11 @@ void handle_signal(struct proc* p){
 }
 void trap(struct trapframe *tf) {
 
-
+  if(tf->trapno == T_PGFLT){
+    cprintf("Page fault in process %s (pid %d) at address %x\n", myproc()->name, myproc()->pid, rcr2());
+    myproc()->killed=1;
+    return;
+  }
   if (myproc() && myproc()->state == RUNNING && has_pending_signals(myproc())) {
 	handle_signal(myproc());
     }

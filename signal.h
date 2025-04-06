@@ -16,5 +16,6 @@ int sigreturn(void);
 #define SIGCONT 4
 #define SIGSTOP 5
 #define SIGUSR1 6
-#define SIGTEST 7
+#define SIGSEGV 7
+#define SIGTEST 8
 

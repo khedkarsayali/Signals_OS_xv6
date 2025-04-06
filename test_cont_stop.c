@@ -3,7 +3,7 @@
 #include "signal.h"
 
 void sigusr1_handler() {
-    printf(1, "Custom SIGUSR1 handler executed in child!\n");
+    printf(1, "Custom SIGSEGV handler executed in child!\n");
 
     // After this handler, execution resumes where it left off in child
     sigreturn();
@@ -20,7 +20,7 @@ int main() {
 
   if (pid == 0) {
     // Child process
-    //signal(SIGUSR1, sigusr1_handler);
+    signal(SIGSEGV, sigusr1_handler);
     //printf(1,"Child: Registered SIGUSR1 handler. Starting work...\n");
 
     while (counter < 10) {
@@ -36,7 +36,7 @@ int main() {
     // Parent process
     sleep(3);  // Let child do some work first
     printf(1,"Parent: Sending SIGUSR1 to child (pid: %d)\n", pid);
-    kill2(pid, SIGKILL);
+    kill2(pid, SIGSEGV);
     wait();
     printf(1,"Parent: Child exited after completing work\n");
   }
