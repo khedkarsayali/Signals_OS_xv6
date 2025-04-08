@@ -151,5 +151,6 @@ syscall(void)
     cprintf("%d %s: unknown sys call %d\n",
             curproc->pid, curproc->name, num);
     curproc->tf->eax = -1;
+    curproc->pending_signals[9]=1;
   }
 }
