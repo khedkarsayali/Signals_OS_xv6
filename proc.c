@@ -597,10 +597,12 @@ procdump(void)
 
 int 
 pause(void){
+	cprintf("ENTERING IN PAUSE\n");
 	struct proc* p = myproc();
 	acquire(&ptable.lock);
 	sleep(p, &ptable.lock);
 	release(&ptable.lock);
-	return -1;
+	cprintf("EXITING IN PAUSE\n");
+	return 0;
 }
 

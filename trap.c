@@ -103,6 +103,7 @@ void trap(struct trapframe *tf) {
   if (myproc() && myproc()->state == RUNNING && has_pending_signals(myproc())) {
 	handle_signal(myproc());
     }
+  
   if (myproc() && myproc()->state == STOPPED) {
     return;  
   }
