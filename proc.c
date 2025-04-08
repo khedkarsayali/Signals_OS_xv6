@@ -545,6 +545,10 @@ kill2(int pid , int signum)
       }
       else {
         p->pending_signals[signum] = 1;
+        if(p->state == PAUSED) {
+          p->state = RUNNABLE;
+          cprintf("kill2: Signal %d woke up paused process PID %d\n", signum, pid);
+        }
         cprintf("kill2: Signal %d set as pending for PID %d\n", signum, pid);
       }
       release(&ptable.lock);
@@ -597,12 +601,13 @@ procdump(void)
 
 int 
 pause(void){
-	cprintf("ENTERING IN PAUSE\n");
-	struct proc* p = myproc();
-	acquire(&ptable.lock);
-	sleep(p, &ptable.lock);
-	release(&ptable.lock);
-	cprintf("EXITING IN PAUSE\n");
-	return 0;
+	  struct proc *p = myproc();
+	  acquire(&ptable.lock);
+	  cprintf("IN pause() PID %d PAUSED\n", p->pid);
+	  p->state = PAUSED;
+	  sched();  
+	  release(&ptable.lock);
+  
+  return 0;
 }
 

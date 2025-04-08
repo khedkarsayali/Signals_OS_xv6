@@ -1,6 +1,6 @@
 #include "types.h"
 #include "user.h"
-#include "signal.h" // if you defined signals like SIGILL, SIGCHLD
+#include "signal.h" 
 
 void sigchld_handler(int signum) {
   printf(1, "Parent: Received SIGCHLD (Child terminated)\n");

@@ -109,7 +109,7 @@ sys_uptime(void)
 int
 sys_pause(void)
 {
-   return pause();
+  return pause();
 }
 
 int sys_signal(void) {
