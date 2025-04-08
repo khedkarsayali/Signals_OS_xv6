@@ -20,5 +20,6 @@ int sigprocmask(int how, uint mask);
 #define SIGSTOP 5
 #define SIGUSR1 6
 #define SIGSEGV 7
-#define SIGTEST 8
+#define SIGCHLD 8
+#define SIGTEST 9
 
