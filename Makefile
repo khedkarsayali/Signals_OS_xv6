@@ -187,6 +187,7 @@ UPROGS=\
 	_test_pause\
 	_test_cont_stop\
 	_test_sigprocmask\
+	_test_sigchld\
 	
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

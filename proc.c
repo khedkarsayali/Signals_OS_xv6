@@ -263,6 +263,9 @@ exit(void)
   curproc->cwd = 0;
 
   acquire(&ptable.lock);
+  if (curproc->parent && curproc->parent->state != UNUSED) {
+    curproc->parent->pending_signals[8]=1;
+  }
 
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
