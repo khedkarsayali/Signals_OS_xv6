@@ -31,6 +31,7 @@ main(void)
     printf(1, "Child exiting...\n");
     
   } else {
+    sleep(10);
     kill2(pid,SIGKILL);
     wait();           
     sleep(10);    

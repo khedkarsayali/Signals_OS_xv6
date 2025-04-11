@@ -94,11 +94,11 @@ found:
 
   for (int i = 0; i < NSIGS; i++) {
     p->handlers[i] = SIG_DFL;
-}
+  }
 
 
-  //memset(p->pending_signals, 0, sizeof(p->pending_signals));
-  //p->old_tf = 0;
+  memset(p->pending_signals, 0, sizeof(p->pending_signals));
+  p->old_tf = 0;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -184,11 +184,7 @@ growproc(int n)
   return 0;
 }
 
-void
-default_signal_handler(void){
-	cprintf("-------Process %d received signal  Terminating----.\n", myproc()->pid);
-  	exit();
-}
+
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
@@ -214,6 +210,8 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  
+  np->blocked_signals=curproc->blocked_signals;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -520,44 +518,38 @@ kill2(int pid , int signum)
   struct proc *p;
 
   acquire(&ptable.lock);
-  cprintf("kill2: Acquired lock, searching for PID %d\n", pid);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
-      cprintf("kill2: Found process with PID %d\n", pid);
-
+    
       if(signum == SIGKILL || signum == SIGINT){
         
-        cprintf("kill2: Signal %d set to kill process PID %d\n", signum, pid);
         if(p->state == SLEEPING){
-          p->state = RUNNABLE;
-          cprintf("kill2: Process PID %d was sleeping, set to RUNNABLE\n", pid);
+          p->state = RUNNABLE;                                 
         }
         p->killed=1;
       } 
       else if(signum==SIGSTOP){
-      	cprintf("%d in SIGSTOP\n",p->pid);
       	p->state=STOPPED;
       }
-      else if(signum==SIGCONT && p->state==STOPPED){
-        cprintf("%d in SIGCONT\n",p->pid);
-      	p->state=RUNNABLE;
+      else if(signum==SIGCONT){
+      	if(p->state==STOPPED || (p->state==PAUSED && p->handlers[signum]!=SIG_DFL)){
+      		p->state=RUNNABLE;
+      		p->pending_signals[signum] = 1;
+      	}
       }
       else {
         p->pending_signals[signum] = 1;
-        if(p->state == PAUSED) {
+        if(p->state == PAUSED && p->handlers[signum]!=SIG_DFL) {
           p->state = RUNNABLE;
-          cprintf("kill2: Signal %d woke up paused process PID %d\n", signum, pid);
         }
-        cprintf("kill2: Signal %d set as pending for PID %d\n", signum, pid);
       }
       release(&ptable.lock);
-      cprintf("kill2: Released lock, signal processing done for PID %d\n", pid);
+
       return 0;
     }
   }
 
-  cprintf("kill2: PID %d not found\n", pid);
   release(&ptable.lock);
   return -1;
 } 
@@ -603,7 +595,6 @@ int
 pause(void){
 	  struct proc *p = myproc();
 	  acquire(&ptable.lock);
-	  cprintf("IN pause() PID %d PAUSED\n", p->pid);
 	  p->state = PAUSED;
 	  sched();  
 	  release(&ptable.lock);

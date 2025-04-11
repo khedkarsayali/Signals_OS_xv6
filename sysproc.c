@@ -9,9 +9,6 @@
 #include "signal.h"
 
 
-int copyin(pde_t *pgdir, void *dst, void *src, uint size);
-
-
 int
 sys_fork(void)
 {
@@ -48,7 +45,7 @@ sys_kill2(void)
    int signum;
    if((argint(0, &pid) < 0) || (argint(1,&signum) <0))
     return -1;
-   cprintf("Kill2 function will be called now \n");
+    
   return kill2(pid,signum);
 }
 
@@ -113,27 +110,23 @@ sys_pause(void)
 }
 
 int sys_signal(void) {
-  cprintf("In sys_signal\n");
-
+  
   int signum;
   sighandler_t handler;
-  //void *u_handler;
   struct proc *p = myproc();
   
   if (argint(0, &signum) < 0)
     return -1;
     
-  if(signum==SIGKILL){
-  	cprintf("User cannot set custom handler for SIGKILL\n");
+  if(signum==SIGKILL || signum==SIGSTOP){
+  	cprintf("User cannot set custom handler for %d\n",signum);
   	return -1;
   }
 
   if (argptr(1, (void*)&handler, sizeof(handler)) < 0)
     return -1;
 
-  //handler = (sighandler_t)u_handler;
   p->handlers[signum] = (void*)handler;
-  cprintf("Handler registered in sys_signal, handler(addr): %p\n", (void*)handler);
   return 0;
 }
 
@@ -142,13 +135,8 @@ sys_sigreturn(void)
 {
   cprintf("in sys_sigreturn :\n");
   struct proc *p = myproc();
-  cprintf("Before sigreturn: tf->eip = %x tf->esp = %x\n", p->tf->eip, p->tf->esp);
-  
-
-
-  // Restore previous trapframe (process context before signal)
+ 
   memmove(p->tf, p->old_tf, sizeof(struct trapframe));
-  cprintf("After sigreturn: tf->eip = %x tf->esp = %x\n", p->tf->eip, p->tf->esp);
   p->old_tf = 0;
 
   return 0;

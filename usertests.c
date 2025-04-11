@@ -1746,38 +1746,6 @@ rand()
   return randstate;
 }
 
-void sigint_handler(int signum) {
-    printf(1, "SIGINT received, signum: %d\n", signum);
-    exit();
-}
-
-void handler(int signum) {
-    printf(1, "Signal %d received!\n", signum);
-    return;
-}
-
-void test_pause() {
-    int pid = getpid();
-    printf(1, "Address of handler: %p\n", (void*)handler);
-    printf(1, "Current PID: %d\n", pid);
-
-    if (signal(SIGINT, handler) < 0) {
-        printf(1, "Failed to register handler for SIGTEST.\n");
-        exit();
-    }
-
-    printf(1, "Signal handler registered. Waiting for SIGTEST.\n");
-
-    printf(1, "Sending SIGTEST using kill2 to PID %d...\n", pid);
-    if (kill2(pid, SIGINT) < 0) {
-        printf(1, "Failed to send SIGTEST using kill2.\n");
-    } else {
-        printf(1, "SIGTEST sent successfully using kill2.\n");
-    }
-
-    sleep(5); // Ensure the signal is processed
-    printf(1, "Exiting test_pause.\n");
-}
 
 int
 main(int argc, char *argv[])
@@ -1832,6 +1800,5 @@ main(int argc, char *argv[])
   uio();
 
   exectest();
-  test_pause();
   exit();
 }

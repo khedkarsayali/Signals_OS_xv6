@@ -2,13 +2,8 @@
 #include "user.h"
 #include "signal.h" 
 
-void sigchld_handler(int signum) {
-  printf(1, "Parent: Received SIGCHLD (Child terminated)\n");
-  sigreturn();
-}
 
 int main() {
-  signal(SIGCHLD, sigchld_handler);
 
   int pid = fork();
   if (pid < 0) {
@@ -17,22 +12,18 @@ int main() {
   }
 
   if (pid == 0) {
-    // === CHILD PROCESS ===
-    printf(1, "Child: About to perform illegal memory access...\n");
+    printf(1, "Child: performing  illegal memory access now\n");
+        
+    asm volatile(
+        "ud2"  
+    );
 
-    // Simulate illegal instruction: call invalid function pointer
-    void (*bad_func)() = (void (*)())0x123456;
-    bad_func(); // Should cause SIGILL
-
-    // Should never reach here
     printf(1, "Child: ERROR — should have been killed by SIGILL\n");
     exit();
   } else {
-    // === PARENT PROCESS ===
-    wait(); // Wait for child to die
-
-    printf(1, "Parent: Child exited with status\n");
+    wait(); 
+    exit();
   }
 
-  exit();
+  
 }

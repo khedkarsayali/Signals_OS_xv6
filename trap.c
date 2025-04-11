@@ -10,7 +10,6 @@
 #include "signal.h"
 #define SYS_sigreturn  25
 
-int copyin(pde_t *pgdir, char *dst, char *src, uint len); 
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -48,10 +47,10 @@ void sigterm_handler(int signum) {
 int has_pending_signals(struct proc *p) {
   for (int i = 0; i < NSIGS; i++) {
     if (p->pending_signals[i]) {
-      return i; // Signal pending
+      return 1; 
     }
   }
-  return -1; // No signal pending
+  return 0; 
 }
 
 void handle_signal(struct proc* p){
@@ -61,8 +60,7 @@ void handle_signal(struct proc* p){
                    continue;
                 }
         	if(p->handlers[i] != SIG_DFL){
-        		cprintf("in handle_signal for user defined sig\n");
-        		cprintf("Before memove: tf->eip = %x tf->esp = %x\n", p->tf->eip, p->tf->esp);
+        		cprintf("in handle_signal\n");
         		memmove(p->old_tf, p->tf, sizeof(struct trapframe));
 			p->tf->eip = (uint)p->handlers[i];
 			p->pending_signals[i] = 0; 
@@ -100,6 +98,12 @@ void trap(struct trapframe *tf) {
     myproc()->killed=1;
     return;
   }
+  
+  if(tf->trapno == T_ILLOP){
+    myproc()->pending_signals[9]=1;
+    return;
+  }  
+  
   if (myproc() && myproc()->state == RUNNING && has_pending_signals(myproc())) {
 	handle_signal(myproc());
     }

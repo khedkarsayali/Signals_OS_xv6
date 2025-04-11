@@ -1,6 +1,5 @@
 #define NSIGS 32
 
-//typedef void (*sighandler_t)(void);
 typedef void (*sighandler_t)(int);
 int kill2(int pid, int signum);
 int pause(void);
